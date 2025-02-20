@@ -1,0 +1,169 @@
+
+
+
+
+
+
+(*--------Notes--------
+Missing initialize to Stage 1
+Missing secondary program for temp regulation
+Missing variables for tempControl program
+Missing variables for temp Simulation. Should be purely in tempControl program?
+
+
+Ton's should have relevant names, and needs to be initialized in pre
+Regulate the speed for correct analogue values. 0..10v
+Add a fourth variable for unknown color, to be empty-runned
+
+
+Sequence logic and post bit-logic should be seperated, when program runs.
+Error logic in relevant statements, for easier debugging on HMI
+Display status logic varialbes, for HMI like: "Finished preheating. Returning to processing location"
+Would be nice with inspection button
+
+
+*)
+
+(*----------Stage 0 Initialize----------*)
+//Starting value for Stage is 0.
+IF Stage = 0 THEN
+    FWD := 0;
+    BWD := 0;
+    //reset a counter?
+    //Reset UR?
+
+    IF S1 = 0 AND S2 = 0 AND S3 = 0 THEN
+    Stage := 1;
+    END_IF;
+
+END_IF;
+
+//Initialize timers
+//Initialize client
+
+
+
+
+(* -------Check start-------- *)
+If Stage = 1 AND start AND S1 THEN
+    FWD := 0;
+    Ton1s_enable := 1;              //Initialize TON1s
+    Speed := 30;                    //Speed 0-10v
+    Stage := 2;
+
+//Running the belt untill element is in front of sensor.
+ELSIF Stage1 AND start AND NOT S1 THEN
+    FWD := 1;
+    Speed := 30;              
+END_IF;
+
+// 1 Second wait, to increase validity of colorsensor
+If Stage2 AND TON1s.Q THEN
+    Red := RedSensor;               //Utilizes internal variables, to lock the color for current run
+    Blue := BlueSensor;             //Utilizes internal variables, to lock the color for current run
+    Green := GreenSensor;           //Utilizes internal variables, to lock the color for current run
+    Ton1S_enable := 0;              //Disable TON1s
+    Stage := 3;
+END_IF;
+
+//Wait untill Preheat temp is reached
+If Stage = 3 AND Temp = SPpreheat THEN
+    FWD := 1;
+    Stage := 4;
+END_IF;
+
+//Stopping the belt for preparation
+IF Stage = 4 AND s2 THEN
+    FWD := 0;
+    Stage := 5;
+END_IF;
+
+//Determination of color and which timer to run initialize
+If Stage = 5 AND RED THEN            //RED
+    TonRED10s_Enable := 1;
+    Stage := 6;
+ELSIF Stage = 5 AND BLUE THEN        //BLUE
+    TonBLUE8S_Enable := 1;
+    Stage := 6;
+ELSIF Stage = 5 and Green THEN       //GREEN
+    TonGREEN5S_Enable := 1;
+    Stage := 6;
+END_IF;
+
+//Preheating done, return to processing
+If Stage = 6 AND TONRED10s.Q OR Stage = 6 AND TONBLUE8s.q OR Stage = 6 AND TonGREEN5s.q THEN
+    BWD := 1;
+    Speed := 50hz;
+    TonGREEN5S_Enable := 0;
+    TonBLUE8S_Enable := 0;
+    TonRED10s_Enable := 0;
+    Stage  := 7;
+END_IF;
+
+//Enabling Process Ton when on processing possition
+IF Stage = 7 and S1 THEN
+    BWD := 0;
+    Ton10s_enable := 1;
+    Stage := 8;
+END_IF;
+
+//10s Wait for processing TON
+IF Stage = 8 AND Ton10s.Q THEN
+    Ton10s_Enable := 0;
+    FWD := 1;
+    Speed := 30hz;
+    Stage := 9;
+END_IF;
+
+//Preparation for curing
+IF Stage = 9 and S2 THEN
+    FWD := 0;
+    Stage := 10;
+END_IF;
+
+//Enable curing timers based on color
+If Stage = 10 AND RED THEN            //RED
+    TonRED10s_Enable := 1;
+    Stage := 11;
+ELSIF Stage = 10 AND BLUE THEN        //BLUE
+    TonBLUE8S_Enable := 1;
+    Stage := 11;
+ELSIF Stage = 10 and Green THEN       //GREEN
+    TonGREEN5S_Enable := 1;
+    Stage := 11;
+END_IF;
+
+//Curing done
+If Stage = 11 AND TONRED10s.Q OR Stage = 11 AND TONBLUE8s.q OR Stage = 11 AND TonGREEN5s.q THEN
+    TonGREEN5S_Enable := 0;
+    TonBLUE8S_Enable := 0;
+    TonRED10s_Enable := 0;
+    FWD := 1;
+    Speed := 50hz;
+    Stage := 12;
+END_IF;
+
+//Stopping belt, ready for pickup
+IF Stage 12 AND S3 THEN
+    FWD := 0;
+    Stage := 13;
+END_IF;
+
+//Determination of which address to be switched on/off, depending
+IF Stage 13 AND RED THEN
+    //Holding register Stage 13
+    //Holding register S3
+    //Holding register RED
+
+ELSIF Stage 13 and BLUE THEN
+    //Holding register Stage 13
+    //Holding register S3
+    //Holding register BLUE    
+
+ELSIF Stage 13 and BLUE THEN
+    //Holding register Stage 13
+    //Holding register S3
+    //Holding register BLUE
+END_IF;
+
+
