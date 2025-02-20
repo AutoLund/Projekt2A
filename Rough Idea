@@ -1,9 +1,3 @@
-
-
-
-
-
-
 (*--------Notes--------
 Missing initialize to Stage 1
 Missing secondary program for temp regulation
@@ -20,8 +14,6 @@ Sequence logic and post bit-logic should be seperated, when program runs.
 Error logic in relevant statements, for easier debugging on HMI
 Display status logic varialbes, for HMI like: "Finished preheating. Returning to processing location"
 Would be nice with inspection button
-
-
 *)
 
 (*----------Stage 0 Initialize----------*)
@@ -40,9 +32,6 @@ END_IF;
 
 //Initialize timers
 //Initialize client
-
-
-
 
 (* -------Check start-------- *)
 If Stage = 1 AND start AND S1 THEN
